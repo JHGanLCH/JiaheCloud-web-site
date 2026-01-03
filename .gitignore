@@ -1,0 +1,25 @@
+# 运行时生成的文件
+site_data.json
+api_log.txt
+
+# 备份文件
+backups/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp

@@ -1,0 +1,207 @@
+# 嘉禾云网网站 - Apache配置文件
+# 适用于虚拟主机环境
+
+# ============================================
+# 1. 启用重写引擎（支持React Router）
+# ============================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # 如果请求的是真实文件或目录，直接访问
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # 否则重定向到 index.html
+    RewriteRule ^(.*)$ /index.html [L,QSA]
+</IfModule>
+
+# ============================================
+# 2. 设置默认首页
+# ============================================
+DirectoryIndex index.html index.php
+
+# ============================================
+# 3. PHP配置
+# ============================================
+<FilesMatch \.php$>
+    SetHandler application/x-httpd-php
+</FilesMatch>
+
+# 设置PHP内存限制（如果虚拟主机允许）
+# php_value memory_limit 128M
+# php_value upload_max_filesize 10M
+# php_value post_max_size 10M
+
+# ============================================
+# 4. 字符编码设置
+# ============================================
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .html .css .js .xml .json .rss .atom
+
+# ============================================
+# 5. MIME类型设置
+# ============================================
+<IfModule mod_mime.c>
+    AddType application/javascript js
+    AddType application/json json
+    AddType text/css css
+    AddType text/html html htm
+    AddType image/svg+xml svg svgz
+    AddType image/webp webp
+</IfModule>
+
+# ============================================
+# 6. 跨域资源共享（CORS）
+# ============================================
+<IfModule mod_headers.c>
+    # 允许跨域访问API
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    
+    # 安全头
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# ============================================
+# 7. Gzip压缩（提升性能）
+# ============================================
+<IfModule mod_deflate.c>
+    # 压缩HTML、CSS、JavaScript、JSON、XML
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xml+rss
+    AddOutputFilterByType DEFLATE text/plain
+    
+    # 不压缩图片（已经是压缩格式）
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|ico)$ no-gzip dont-vary
+</IfModule>
+
+# ============================================
+# 8. 浏览器缓存设置
+# ============================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # 默认缓存1天
+    ExpiresDefault "access plus 1 day"
+    
+    # HTML文件不缓存（保证内容更新）
+    ExpiresByType text/html "access plus 0 seconds"
+    
+    # CSS和JavaScript缓存1个月
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # 图片缓存1年
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # 字体文件缓存1年
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    
+    # JSON和XML缓存1小时
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType text/xml "access plus 1 hour"
+</IfModule>
+
+# ============================================
+# 9. 缓存控制头
+# ============================================
+<IfModule mod_headers.c>
+    # 静态资源添加缓存头
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|ico|css|js|woff|woff2|ttf|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    
+    # HTML文件不缓存
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# ============================================
+# 10. 安全设置
+# ============================================
+
+# 禁止目录浏览
+Options -Indexes
+
+# 禁止访问敏感文件
+<FilesMatch "(^\.htaccess|^\.git|^\.env|\.log$|\.json$)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 允许访问site_data.json（API需要）
+<FilesMatch "^site_data\.json$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# 保护PHP配置文件
+<FilesMatch "^(config|database)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ============================================
+# 11. 错误页面（可选）
+# ============================================
+# ErrorDocument 404 /index.html
+# ErrorDocument 403 /index.html
+# ErrorDocument 500 /index.html
+
+# ============================================
+# 12. 强制HTTPS（如果已配置SSL证书）
+# ============================================
+# 取消下面的注释以启用HTTPS强制跳转
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# ============================================
+# 13. 防盗链（可选）
+# ============================================
+# 取消下面的注释以启用防盗链
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTP_REFERER} !^$
+#     RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?yourdomain.com [NC]
+#     RewriteRule \.(jpg|jpeg|png|gif|webp)$ - [F,NC,L]
+# </IfModule>
+
+# ============================================
+# 14. PHP错误显示（生产环境建议关闭）
+# ============================================
+# php_flag display_errors Off
+# php_flag log_errors On
+# php_value error_log /path/to/php_errors.log
+
+# ============================================
+# 配置文件结束
+# ============================================
+# 版本：v1.0.0
+# 更新时间：2026-01-02
+# 适用环境：Apache 2.2+ with mod_rewrite
